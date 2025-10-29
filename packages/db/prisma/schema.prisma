@@ -1,0 +1,392 @@
+// Prisma schema for Xpenzi Stage 0 scaffold.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ExpenseStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SETTLED
+  VOID
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+}
+
+enum BudgetInterval {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum NotificationType {
+  EXPENSE_CREATED
+  EXPENSE_UPDATED
+  SETTLEMENT_REQUIRED
+  BUDGET_LIMIT_NEAR
+  INSIGHT_READY
+}
+
+model User {
+  id           String   @id @db.Uuid
+  tenantId     String
+  email        String   @unique
+  firstName    String?
+  lastName     String?
+  imageUrl     String?
+  role         String   @default("member")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastSeenAt   DateTime?
+  groups       GroupMember[]
+  expenses     Expense[]        @relation("ExpenseCreator")
+  settlementsFrom Settlement[] @relation("SettlementFrom")
+  settlementsTo   Settlement[] @relation("SettlementTo")
+  notifications Notification[]
+  pushSubscriptions UserPushSubscription[]
+  auditLogs    AuditLog[]       @relation("AuditActor")
+
+  @@index([tenantId])
+}
+
+model Group {
+  id          String         @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  currency    String         @default("USD")
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  members     GroupMember[]
+  expenses    Expense[]
+  budgets     Budget[]
+  settlements Settlement[]
+  rules       ExpenseRule[]
+  recurringExpenses RecurringExpense[]
+  monthlyAggregates MonthlyAggregate[]
+  notifications Notification[]
+  trips Trip[]
+
+  @@index([tenantId])
+  @@index([tenantId, createdById])
+  @@unique([tenantId, name])
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  tenantId  String
+  groupId   String
+  userId    String
+  role      String   @default("member")
+  joinedAt  DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([tenantId, groupId])
+}
+
+model Expense {
+  id              String          @id @default(cuid())
+  tenantId        String
+  groupId         String
+  createdByUserId String
+  description     String
+  amount          Decimal         @db.Decimal(18, 4)
+  currency        String
+  incurredAt      DateTime
+  status          ExpenseStatus   @default(APPROVED)
+  receiptUrl      String?
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  group   Group @relation(fields: [groupId], references: [id])
+  creator User  @relation("ExpenseCreator", fields: [createdByUserId], references: [id])
+  splits  ExpenseSplit[]
+  approvals Approval[]
+  rulesApplied ExpenseRuleExecution[]
+  tripExpense TripExpense? @relation("ExpenseTrip")
+  receiptExtract ReceiptExtract?
+
+  @@index([tenantId, groupId])
+  @@index([tenantId, createdByUserId])
+  @@index([tenantId, incurredAt])
+}
+
+model ExpenseSplit {
+  id        String   @id @default(cuid())
+  tenantId  String
+  expenseId String
+  userId    String
+  amount    Decimal  @db.Decimal(18, 4)
+  share     Decimal  @db.Decimal(10, 6)
+  type      String   @default("equal") // equal, percentage, shares
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+
+  @@index([tenantId, expenseId])
+  @@index([tenantId, userId])
+}
+
+model Approval {
+  id        String   @id @default(cuid())
+  tenantId  String
+  expenseId String
+  userId    String
+  status    String   @default("pending")
+  decidedAt DateTime?
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+
+  @@index([tenantId, userId])
+}
+
+model Balance {
+  id        String   @id @default(cuid())
+  tenantId  String
+  groupId   String
+  userId    String
+  currency  String
+  amount    Decimal  @db.Decimal(18, 4)
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, groupId, userId, currency])
+  @@index([tenantId, userId])
+}
+
+model Settlement {
+  id          String           @id @default(cuid())
+  tenantId    String
+  groupId     String
+  fromUserId  String
+  toUserId    String
+  amount      Decimal          @db.Decimal(18, 4)
+  currency    String
+  status      SettlementStatus @default(PENDING)
+  dueDate     DateTime?
+  settledAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  from  User  @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  to    User  @relation("SettlementTo", fields: [toUserId], references: [id])
+
+  @@index([tenantId, groupId])
+  @@index([tenantId, fromUserId])
+  @@index([tenantId, toUserId])
+}
+
+model Budget {
+  id          String         @id @default(cuid())
+  tenantId    String
+  groupId     String
+  name        String
+  description String?
+  limitAmount Decimal        @db.Decimal(18, 2)
+  currency    String
+  interval    BudgetInterval @default(MONTHLY)
+  startsOn    DateTime
+  endsOn      DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@index([tenantId, groupId])
+}
+
+model MonthlyAggregate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  groupId   String
+  month     DateTime
+  total     Decimal  @db.Decimal(18, 2)
+  currency  String
+  computedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@unique([tenantId, groupId, month, currency])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      NotificationType
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group? @relation(fields: [groupId], references: [id])
+  groupId String?
+
+  @@index([tenantId, userId])
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  tenantId        String
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  plan            String   @default("free")
+  status          String   @default("active")
+  seats           Int      @default(5)
+  currency        String   @default("USD")
+  renewsAt        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  actorId   String?
+  action    String
+  targetId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([tenantId, action])
+  @@index([tenantId, createdAt])
+}
+
+model ExpenseRule {
+  id        String   @id @default(cuid())
+  tenantId  String
+  groupId   String
+  name      String
+  isActive  Boolean  @default(true)
+  definition Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id])
+  executions ExpenseRuleExecution[]
+  recurringSchedules RecurringExpense[] @relation("RecurringExpenseRule")
+
+  @@index([tenantId, groupId])
+}
+
+model ExpenseRuleExecution {
+  id        String   @id @default(cuid())
+  tenantId  String
+  expenseId String
+  ruleId    String
+  outcome   Json
+  executedAt DateTime @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+  rule    ExpenseRule @relation(fields: [ruleId], references: [id])
+
+  @@index([tenantId, ruleId])
+}
+
+model RecurringExpense {
+  id          String   @id @default(cuid())
+  tenantId    String
+  groupId     String
+  description String
+  amount      Decimal  @db.Decimal(18, 2)
+  currency    String
+  cadence     String
+  nextRunAt   DateTime
+  lastRunAt   DateTime?
+  ruleId      String?
+
+  group Group @relation(fields: [groupId], references: [id])
+  rule  ExpenseRule? @relation("RecurringExpenseRule", fields: [ruleId], references: [id])
+
+  @@index([tenantId, groupId])
+  @@index([tenantId, nextRunAt])
+}
+
+model Trip {
+  id        String    @id @default(cuid())
+  tenantId  String
+  name      String
+  description String?
+  startsOn  DateTime
+  endsOn    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  groupId   String?
+
+  group Group? @relation(fields: [groupId], references: [id])
+  expenses TripExpense[]
+
+  @@index([tenantId])
+}
+
+model TripExpense {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tripId    String
+  expenseId String
+
+  trip    Trip    @relation(fields: [tripId], references: [id])
+  expense Expense @relation("ExpenseTrip", fields: [expenseId], references: [id])
+
+  @@unique([tripId, expenseId])
+  @@unique([expenseId])
+  @@index([tenantId, tripId])
+}
+
+model ReceiptExtract {
+  id         String   @id @default(cuid())
+  tenantId   String
+  expenseId  String   @unique
+  status     String   @default("pending")
+  payload    Json?
+  extractedAt DateTime?
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+
+  @@index([tenantId])
+}
+
+model FxRate {
+  id            String   @id @default(cuid())
+  tenantId      String
+  baseCurrency  String
+  quoteCurrency String
+  rate          Decimal  @db.Decimal(18, 6)
+  asOf          DateTime
+  source        String   @default("openexchangerates")
+
+  @@unique([tenantId, baseCurrency, quoteCurrency, asOf])
+  @@index([tenantId, asOf])
+}
+
+model UserPushSubscription {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, userId])
+}

@@ -1,0 +1,55 @@
+name: Lambdas CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/lambdas.yml'
+  pull_request:
+    paths:
+      - 'services/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/lambdas.yml'
+
+jobs:
+  build:
+    name: Build & Test Lambdas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8.15.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter lambdas lint
+
+      - name: Typecheck
+        run: pnpm --filter lambdas typecheck
+
+      - name: Test
+        run: pnpm --filter lambdas test -- --run
+
+      - name: Bundle
+        run: pnpm --filter lambdas build

@@ -1,0 +1,10 @@
+{
+  "name": "Zplit",
+  "short_name": "Zplit",
+  "description": "Splitwise-style shared expense tracking with AI budgeting insights.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "icons": []
+}

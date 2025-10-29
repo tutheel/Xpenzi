@@ -1,0 +1,10 @@
+{
+  "name": "infra",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('Terraform build placeholder; run terraform manually.')\"",
+    "lint": "node -e \"console.log('Terraform lint placeholder; use terraform fmt -check.')\"",
+    "test": "node -e \"console.log('No tests for Terraform yet.')\""
+  }
+}
