@@ -27,7 +27,12 @@ jobs:
           corepack pnpm --version
 
       - name: Install dependencies
-        run: corepack pnpm install --frozen-lockfile
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            corepack pnpm install --frozen-lockfile
+          else
+            corepack pnpm install --no-frozen-lockfile
+          fi
 
       - name: Run Prisma migrate (placeholder)
         run: corepack pnpm --filter db migrate:deploy
