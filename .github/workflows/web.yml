@@ -39,15 +39,16 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@8.15.4 --activate
+          corepack pnpm --version
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: corepack pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm --filter web lint
+        run: corepack pnpm --filter web lint
 
       - name: Test
-        run: pnpm --filter web test -- --run
+        run: corepack pnpm --filter web test -- --run
 
       - name: Build
-        run: pnpm --filter web build
+        run: corepack pnpm --filter web build

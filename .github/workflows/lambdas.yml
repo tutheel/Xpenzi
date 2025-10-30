@@ -39,18 +39,19 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@8.15.4 --activate
+          corepack pnpm --version
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: corepack pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm --filter lambdas lint
+        run: corepack pnpm --filter lambdas lint
 
       - name: Typecheck
-        run: pnpm --filter lambdas typecheck
+        run: corepack pnpm --filter lambdas typecheck
 
       - name: Test
-        run: pnpm --filter lambdas test -- --run
+        run: corepack pnpm --filter lambdas test -- --run
 
       - name: Bundle
-        run: pnpm --filter lambdas build
+        run: corepack pnpm --filter lambdas build
