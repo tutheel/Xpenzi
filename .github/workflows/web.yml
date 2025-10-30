@@ -51,7 +51,7 @@ jobs:
         run: corepack pnpm --filter web lint
 
       - name: Test
-        run: corepack pnpm --filter web test -- --run
+        run: corepack pnpm --filter web test
 
       - name: Build
         run: corepack pnpm --filter web build

@@ -54,7 +54,7 @@ jobs:
         run: corepack pnpm --filter lambdas typecheck
 
       - name: Test
-        run: corepack pnpm --filter lambdas test -- --run
+        run: corepack pnpm --filter lambdas test
 
       - name: Bundle
         run: corepack pnpm --filter lambdas build

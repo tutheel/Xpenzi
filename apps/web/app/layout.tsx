@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 
 import './globals.css';
 import { cn } from '@/lib/utils';
+import { THEME_STORAGE_KEY } from '@/lib/theme';
 import { AppProviders } from './providers';
 
 const inter = Inter({
@@ -10,7 +11,25 @@ const inter = Inter({
   variable: '--font-sans',
 });
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Zplit'; // placeholder brand
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Zplit';
+
+const themeInitScript = `
+(() => {
+  const storageKey = '${THEME_STORAGE_KEY}';
+  const darkClass = 'dark';
+  try {
+    const storedTheme = window.localStorage.getItem(storageKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = storedTheme === 'light' || storedTheme === 'dark'
+      ? storedTheme
+      : (prefersDark ? 'dark' : 'light');
+    document.documentElement.classList.toggle(darkClass, theme === 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (error) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+`;
 
 export const metadata: Metadata = {
   title: `${appName} | Smarter shared budgets`,
@@ -25,28 +44,12 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={cn('min-h-screen bg-background font-sans antialiased', inter.variable)}>
-        <AppProviders>
-          <div className="flex min-h-screen flex-col">
-            <header className="border-b border-border bg-card/80 backdrop-blur">
-              <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-                <span className="text-lg font-semibold tracking-tight text-foreground">
-                  {appName}
-                </span>
-                <span className="text-sm text-muted-foreground">Shared budgets made simple.</span>
-              </div>
-            </header>
-            <main className="flex-1">{children}</main>
-            <footer className="border-t border-border bg-muted/30">
-              <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-                <span className="text-xs text-muted-foreground">
-                  &copy; {new Date().getFullYear()} {appName}. All rights reserved.
-                </span>
-              </div>
-            </footer>
-          </div>
-        </AppProviders>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

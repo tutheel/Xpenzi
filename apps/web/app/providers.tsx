@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 
 import { ClerkProvider } from '@clerk/nextjs';
 
+import { ThemeProvider } from '@/components/theme-provider';
+
 interface AppProvidersProps {
   children: ReactNode;
 }
@@ -23,8 +25,12 @@ export function AppProviders({ children }: AppProvidersProps) {
       );
     }
 
-    return <>{children}</>;
+    return <ThemeProvider>{children}</ThemeProvider>;
   }
 
-  return <ClerkProvider publishableKey={clerkPublishableKey}>{children}</ClerkProvider>;
+  return (
+    <ClerkProvider publishableKey={clerkPublishableKey}>
+      <ThemeProvider>{children}</ThemeProvider>
+    </ClerkProvider>
+  );
 }

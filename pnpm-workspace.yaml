@@ -1,5 +1,14 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'services'
-  - 'infra'
+  - apps/*
+  - packages/*
+  - services
+  - infra
+
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver

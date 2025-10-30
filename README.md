@@ -4,12 +4,12 @@ Xpenzi is a Splitwise-inspired SaaS with AI budgeting insights, optimized for se
 
 ### Workspace Layout
 
-- `apps/web` – Next.js App Router + Tailwind + shadcn-style tokens, Clerk wiring, Vitest setup.
-- `services` – Lambda TypeScript starter with Powertools logger, zod validation, esbuild bundling.
-- `packages/api-client` – Typed fetch SDK scaffold with zod response validation.
-- `packages/db` – Prisma schema and scripts for Postgres (Neon/Supabase/Aurora ready).
-- `infra/terraform` – Terraform root module stubs with AWS + random providers and remote state placeholders.
-- `.github/workflows` – CI pipelines for web, lambdas, and DB migrations.
+- `apps/web` - Next.js App Router + Tailwind + shadcn-style tokens, Clerk wiring, Vitest setup.
+- `services` - Lambda TypeScript starter with Powertools logger, zod validation, esbuild bundling.
+- `packages/api-client` - Typed fetch SDK scaffold with zod response validation.
+- `packages/db` - Prisma schema and scripts for Postgres (Neon/Supabase/Aurora ready).
+- `infra/terraform` - Terraform root module stubs with AWS + random providers and remote state placeholders.
+- `.github/workflows` - CI pipelines for web, lambdas, and DB migrations.
 
 ### Toolchain
 
@@ -39,10 +39,10 @@ Xpenzi is a Splitwise-inspired SaaS with AI budgeting insights, optimized for se
 
 ### Quality Gates
 
-- `pnpm lint` – Lints all workspaces via ESLint.
-- `pnpm test` – Executes Vitest suites across packages/apps/services.
-- `pnpm build` – Runs build pipeline (Next build, tsc builds, esbuild bundle, Prisma generate).
-- `pnpm format:check` – Ensures Prettier formatting compliance.
+- `pnpm lint` - Lints all workspaces via ESLint.
+- `pnpm test` - Executes Vitest suites across packages/apps/services.
+- `pnpm build` - Runs build pipeline (Next build, tsc builds, esbuild bundle, Prisma generate).
+- `pnpm format:check` - Ensures Prettier formatting compliance.
 
 ### Database Workflow
 
