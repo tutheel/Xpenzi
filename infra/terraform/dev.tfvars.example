@@ -1,8 +1,0 @@
-# Copy this file to dev.tfvars and fill in real values before running Terraform.
-# Any keys you add here must have matching variable blocks in variables.tf.
-
-environment = "dev"
-aws_region  = "us-east-1"
-
-# Example of placing sensitive values (ensure the variable exists in variables.tf):
-# db_master_password = "HDMItron@#32*()"
