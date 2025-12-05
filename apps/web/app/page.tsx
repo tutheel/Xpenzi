@@ -7,7 +7,7 @@ import { toast } from '@/components/Toaster';
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground ">
         This is the starter shell for Xpenzi. Add expenses, budgets, and groups in upcoming stages.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
