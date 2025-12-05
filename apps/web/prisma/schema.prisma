@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ExpenseStatus {
+  APPROVED
+  PENDING
+  DENIED
+  DRAFT
+}
+
+enum ShareType {
+  EQUAL
+  PERCENT
+  WEIGHT
+}
+
+enum SettlementMethod {
+  CASH
+  UPI
+  STRIPE
+  OTHER
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum OwnerType {
+  USER
+  GROUP
+}
+
+model User {
+  id                 String                  @id @default(cuid())
+  clerkUserId        String                  @unique
+  email              String
+  name               String?
+  createdAt          DateTime                @default(now())
+  groups             Group[]                 @relation("GroupCreator")
+  createdExpenses    Expense[]               @relation("ExpenseCreator")
+  groupMembers       GroupMember[]
+  auditLogs          AuditLog[]
+  budgets            Budget[]
+  pushSubscriptions  UserPushSubscription[]
+}
+
+model Group {
+  id                String           @id @default(cuid())
+  name              String
+  currency          String
+  createdById       String
+  createdAt         DateTime         @default(now())
+  createdBy         User             @relation("GroupCreator", fields: [createdById], references: [id])
+  members           GroupMember[]
+  expenses          Expense[]
+  balances          Balance[]
+  settlements       Settlement[]
+}
+
+model GroupMember {
+  id            String        @id @default(cuid())
+  groupId       String
+  userId        String?
+  displayName   String
+  role          MemberRole
+  joinedAt      DateTime      @default(now())
+  group         Group         @relation(fields: [groupId], references: [id])
+  user          User?         @relation(fields: [userId], references: [id])
+  expensesPaid  Expense[]     @relation("PayerMember")
+  expenseSplits ExpenseSplit[]
+  balances      Balance[]
+  settlementsFrom Settlement[] @relation("SettlementFrom")
+  settlementsTo   Settlement[] @relation("SettlementTo")
+}
+
+model Expense {
+  id             String         @id @default(cuid())
+  groupId        String
+  payerMemberId  String
+  description    String
+  amountCents    Int
+  currency       String
+  category       String?
+  expenseDate    DateTime
+  notes          String?
+  receiptId      String?
+  status         ExpenseStatus
+  createdById    String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  isDeleted      Boolean        @default(false)
+  group          Group          @relation(fields: [groupId], references: [id])
+  payer          GroupMember    @relation("PayerMember", fields: [payerMemberId], references: [id])
+  createdBy      User           @relation("ExpenseCreator", fields: [createdById], references: [id])
+  receipt        Receipt?       @relation(fields: [receiptId], references: [id])
+  splits         ExpenseSplit[]
+
+  @@index([groupId, expenseDate])
+}
+
+model ExpenseSplit {
+  id         String      @id @default(cuid())
+  expenseId  String
+  memberId   String
+  shareType  ShareType
+  shareValue Decimal     @db.Decimal(10, 4)
+  owedCents  Int
+  expense    Expense     @relation(fields: [expenseId], references: [id])
+  member     GroupMember @relation(fields: [memberId], references: [id])
+}
+
+model Balance {
+  id           String      @id @default(cuid())
+  groupId      String
+  memberId     String
+  balanceCents Int
+  updatedAt    DateTime    @default(now())
+  group        Group       @relation(fields: [groupId], references: [id])
+  member       GroupMember @relation(fields: [memberId], references: [id])
+
+  @@unique([groupId, memberId])
+}
+
+model Settlement {
+  id           String             @id @default(cuid())
+  groupId      String
+  fromMemberId String
+  toMemberId   String
+  amountCents  Int
+  method       SettlementMethod
+  status       SettlementStatus
+  createdAt    DateTime           @default(now())
+  group        Group              @relation(fields: [groupId], references: [id])
+  fromMember   GroupMember        @relation("SettlementFrom", fields: [fromMemberId], references: [id])
+  toMember     GroupMember        @relation("SettlementTo", fields: [toMemberId], references: [id])
+}
+
+model Budget {
+  id               String    @id @default(cuid())
+  ownerType        OwnerType
+  ownerId          String
+  month            String
+  currency         String
+  totalLimitCents  Int
+  perCategoryJson  Json
+  createdById      String
+  createdBy        User      @relation(fields: [createdById], references: [id])
+}
+
+model MonthlyAggregate {
+  id         String    @id @default(cuid())
+  ownerType  OwnerType
+  ownerId    String
+  month      String
+  totalsJson Json
+  createdAt  DateTime  @default(now())
+
+  @@unique([ownerType, ownerId, month])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  entity      String
+  entityId    String
+  action      String
+  diffJson    Json
+  occurredAt  DateTime @default(now())
+  actor       User     @relation(fields: [actorUserId], references: [id])
+}
+
+model Receipt {
+  id        String    @id @default(cuid())
+  mimeType  String
+  content   Bytes
+  createdAt DateTime  @default(now())
+  expenses  Expense[]
+}
+
+model UserPushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}

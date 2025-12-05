@@ -17,6 +17,28 @@ Xpenzi is a Splitwise-style shared expense and budgeting web app built with Next
    pnpm dev --filter @xpenzi/web
    ```
 
+## Database Setup
+Local Postgres via Docker Compose:
+1. Start Postgres:
+   ```bash
+   docker compose -f deploy/docker-compose.yml up -d postgres
+   ```
+2. Set `DATABASE_URL` (see `apps/web/.env.example`):
+   ```
+   postgresql://postgres:postgres@localhost:5432/xpenzi?schema=public
+   ```
+3. Run migrations and seed from `apps/web`:
+   ```bash
+   pnpm --filter @xpenzi/web db:migrate
+   pnpm --filter @xpenzi/web db:seed
+   ```
+4. Inspect data:
+   ```bash
+   pnpm --filter @xpenzi/web db:studio
+   ```
+
+If you prefer Supabase/Neon/etc., override `DATABASE_URL` with their connection string; Prisma will use it for migrate/seed.
+
 ## Docker Compose
 To run Postgres and the web app together:
 ```bash
