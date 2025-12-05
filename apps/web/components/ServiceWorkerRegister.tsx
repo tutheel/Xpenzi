@@ -10,8 +10,7 @@ export function ServiceWorkerRegister() {
       try {
         await navigator.serviceWorker.register('/sw.js');
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('SW registration failed', err);
+        console.error('Service Worker registration failed', err);
       }
     };
 

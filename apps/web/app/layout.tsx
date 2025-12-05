@@ -11,7 +11,6 @@ const inter = Inter({ subsets: ['latin'] });
 const publishableKey =
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_xpenzi_placeholder';
 if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-  // eslint-disable-next-line no-console
   console.warn('Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY. Using placeholder; set a real key for auth.');
 }
 
