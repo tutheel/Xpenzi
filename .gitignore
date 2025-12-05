@@ -8,9 +8,6 @@ build
 coverage
 *.log
 tmp
-terraform.tfstate
-terraform.tfstate.*
-.terraform/
 /.idea
 .env
 .env.local
@@ -18,8 +15,4 @@ terraform.tfstate.*
 .env.staging
 .env.production
 !.env.example
-*.tfvars
-*.tfvars.json
-*.tfplan
-backend.hcl
-*.hcl.example
+*.tsbuildinfo

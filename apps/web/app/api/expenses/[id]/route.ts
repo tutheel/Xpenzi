@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   });
 
   if (!expense) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const isMember = expense.group.members.some((m) => m.userId === user.id);
+  const isMember = expense.group.members.some((m: { userId: string | null }) => m.userId === user.id);
   if (!isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const json = await req.json().catch(() => null);
@@ -101,7 +101,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   });
   if (!expense) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const isMember = expense.group.members.some((m) => m.userId === user.id);
+  const isMember = expense.group.members.some((m: { userId: string | null }) => m.userId === user.id);
   if (!isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   await prisma.expense.update({

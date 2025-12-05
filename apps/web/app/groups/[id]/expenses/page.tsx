@@ -43,7 +43,13 @@ export default async function GroupExpensesPage({ params }: Params) {
     notFound();
   }
 
-  const membership = group.members.find((m) => m.userId === user.id);
+  const members = group.members;
+  const expenses = group.expenses;
+  type MemberWithUser = (typeof members)[number];
+  type ExpenseWithRelations = (typeof expenses)[number];
+  type SplitWithMember = ExpenseWithRelations['splits'][number];
+
+  const membership = members.find((member: MemberWithUser) => member.userId === user.id);
   if (!membership) {
     return (
       <Card>
@@ -75,10 +81,10 @@ export default async function GroupExpensesPage({ params }: Params) {
         <CardContent>
           <ExpenseForm
             groupId={group.id}
-            members={group.members.map((m) => ({
-              id: m.id,
-              displayName: m.displayName || m.user?.name || m.user?.email || 'Member',
-              user: m.user ? { name: m.user.name, email: m.user.email } : undefined,
+            members={members.map((member: MemberWithUser) => ({
+              id: member.id,
+              displayName: member.displayName || member.user?.name || member.user?.email || 'Member',
+              user: member.user ? { name: member.user.name, email: member.user.email } : undefined,
             }))}
           />
         </CardContent>
@@ -90,41 +96,41 @@ export default async function GroupExpensesPage({ params }: Params) {
           <CardDescription>Recent expenses in this group.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {group.expenses.length === 0 ? (
+          {expenses.length === 0 ? (
             <p className="text-sm text-muted-foreground">No expenses yet.</p>
           ) : (
-            group.expenses.map((exp) => (
-              <div key={exp.id} className="rounded-md border border-border p-3 space-y-1">
+            expenses.map((expense: ExpenseWithRelations) => (
+              <div key={expense.id} className="rounded-md border border-border p-3 space-y-1">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-semibold">{exp.description}</p>
+                    <p className="font-semibold">{expense.description}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(exp.expenseDate).toLocaleDateString()} · {exp.category || 'Uncategorized'}
+                      {new Date(expense.expenseDate).toLocaleDateString()} · {expense.category || 'Uncategorized'}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">
-                      {(exp.amountCents / 100).toFixed(2)} {exp.currency}
+                      {(expense.amountCents / 100).toFixed(2)} {expense.currency}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Payer:{' '}
-                      {exp.payer?.displayName ||
-                        exp.payer?.user?.name ||
-                        exp.payer?.user?.email ||
+                      {expense.payer?.displayName ||
+                        expense.payer?.user?.name ||
+                        expense.payer?.user?.email ||
                         'Member'}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                  {exp.splits.map((s) => (
-                    <Badge key={s.id} variant="secondary">
-                      {s.member.displayName || s.member.user?.name || s.member.user?.email || 'Member'} ·{' '}
-                      {(s.owedCents / 100).toFixed(2)} {exp.currency}
+                  {expense.splits.map((split: SplitWithMember) => (
+                    <Badge key={split.id} variant="secondary">
+                      {split.member.displayName || split.member.user?.name || split.member.user?.email || 'Member'} ·{' '}
+                      {(split.owedCents / 100).toFixed(2)} {expense.currency}
                     </Badge>
                   ))}
-                  {exp.receiptId && (
+                  {expense.receiptId && (
                     <Link
-                      href={`/api/receipts/${exp.receiptId}`}
+                      href={`/api/receipts/${expense.receiptId}`}
                       className="text-primary hover:underline text-sm"
                       target="_blank"
                     >
@@ -140,3 +146,12 @@ export default async function GroupExpensesPage({ params }: Params) {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
