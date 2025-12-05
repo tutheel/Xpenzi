@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { getOrCreateDbUser } from '@/lib/auth';
 import { computeSplits } from '@/lib/splitMath';
+import type { Prisma } from '@prisma/client';
 
 const updateExpenseSchema = z.object({
   description: z.string().min(1).optional(),
@@ -49,13 +50,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   const updates = parsed.data;
-  let splitsData;
+  let splitsData: ReturnType<typeof computeSplits> | undefined;
   if (updates.splits) {
     const amount = updates.amountCents ?? expense.amountCents;
     splitsData = computeSplits(amount, updates.splits);
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     if (splitsData) {
       await tx.expenseSplit.deleteMany({ where: { expenseId: id } });
       await tx.expenseSplit.createMany({

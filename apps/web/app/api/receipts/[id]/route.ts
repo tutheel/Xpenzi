@@ -28,7 +28,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  return new NextResponse(expense.receipt.content, {
+  const body = new Uint8Array(expense.receipt.content);
+  return new NextResponse(body, {
     status: 200,
     headers: {
       'Content-Type': expense.receipt.mimeType,
