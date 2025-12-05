@@ -9,7 +9,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 
 const inter = Inter({ subsets: ['latin'] });
 const publishableKey =
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_123456789012345678901234567890';
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_xpenzi_placeholder';
 if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
   console.warn('Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY. Using placeholder; set a real key for auth.');
 }

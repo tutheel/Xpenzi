@@ -27,6 +27,15 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Ensure Clerk envs are set
+        run: |
+          if [ -z "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" ]; then
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing"; exit 1;
+          fi
+          if [ -z "$CLERK_SECRET_KEY" ]; then
+            echo "CLERK_SECRET_KEY is missing"; exit 1;
+          fi
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
