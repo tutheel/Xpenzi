@@ -5,13 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prebuild": "pnpm prisma:generate",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --project tsconfig.json --noEmit",
+    "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "test:split": "vitest run lib/__tests__/splitMath.test.ts"
+    "test:split": "vitest run lib/__tests__/splitMath.test.ts",
+    "postinstall": "pnpm prisma:generate"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.6",
