@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: xpenzi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: ..
+      dockerfile: ./apps/web/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/xpenzi
+      PORT: 3000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

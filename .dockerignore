@@ -1,0 +1,12 @@
+node_modules
+.pnpm-store
+.turbo
+.next
+dist
+build
+.git
+.gitignore
+*.log
+tmp
+coverage
+pnpm-lock.yaml
