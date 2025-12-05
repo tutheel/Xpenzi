@@ -6,7 +6,6 @@ build
 .vercel
 .DS_Store
 coverage
-pnpm-lock.yaml
 *.log
 tmp
 terraform.tfstate
