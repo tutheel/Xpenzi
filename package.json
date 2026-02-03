@@ -1,16 +1,25 @@
 {
   "name": "xpenzi",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@8.15.5",
-  "engines": {
-    "node": ">=20"
-  },
   "scripts": {
-    "dev": "pnpm --filter @xpenzi/web dev",
-    "build": "pnpm --filter @xpenzi/web build",
-    "start": "pnpm --filter @xpenzi/web start",
-    "lint": "pnpm --filter @xpenzi/web lint",
-    "typecheck": "pnpm --filter @xpenzi/web typecheck"
+    "dev": "pnpm run --parallel dev:client dev:server",
+    "dev:client": "pnpm --filter @xpenzi/client dev",
+    "dev:server": "pnpm --filter @xpenzi/server dev",
+    "build": "pnpm --filter @xpenzi/shared build && pnpm --filter @xpenzi/client build && pnpm --filter @xpenzi/server build",
+    "build:shared": "pnpm --filter @xpenzi/shared build",
+    "typecheck": "pnpm -r typecheck",
+    "db:migrate": "pnpm --filter @xpenzi/server db:migrate",
+    "db:push": "pnpm --filter @xpenzi/server db:push",
+    "db:studio": "pnpm --filter @xpenzi/server db:studio",
+    "db:generate": "pnpm --filter @xpenzi/server db:generate",
+    "db:seed": "pnpm --filter @xpenzi/server db:seed",
+    "db:reset": "pnpm --filter @xpenzi/server db:reset",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.2",
+    "typescript": "^5.5.4"
   }
 }

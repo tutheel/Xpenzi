@@ -1,62 +1,99 @@
 # Xpenzi
 
-Xpenzi is a Splitwise-style shared expense and budgeting web app built with Next.js 14, TypeScript, and pnpm workspaces. This stage sets up the monorepo structure, basic tooling, and containerization for local development.
+Xpenzi is a production-ready MVP for group expense tracking. It centralizes shared costs, partial splits, and settlements in one ledger, with strict money math, deterministic rounding, and clear balances.
 
-## Prerequisites
-- Node.js 20+ (`nvm use` reads `.nvmrc`)
-- pnpm 8+
-- Docker + Docker Compose (for Postgres + app)
+## Features
+- Clerk authentication with first-login user upsert
+- Group creation and member management (admins only)
+- Expense creation with partial splits and 4 split methods
+- Expense editing (admin or creator) and soft deletion
+- Per-group balances and settlement history
+- Suggested settlements via greedy matching
+- Modern UI with Tailwind + shadcn/ui
 
-## Getting Started
+## Assumptions
+- Users must already exist in the system to be added to a group (no invites in MVP).
+- Money is stored as integer minor units (2 decimal places).
+- Percent splits are whole-number percentages and must sum to 100.
+- Group currency is fixed for all expenses and settlements in that group.
+
+## Tech Stack
+- Next.js App Router + TypeScript
+- Tailwind CSS + shadcn/ui
+- Clerk authentication
+- Prisma + PostgreSQL
+- Docker (local Postgres)
+
+## Setup
 1. Install dependencies:
    ```bash
-   pnpm install
+   npm install
    ```
-2. Run the web app in development (http://localhost:3000):
+2. Copy env file:
    ```bash
-   pnpm dev --filter @xpenzi/web
+   cp .env.example .env
+   ```
+3. Start Postgres:
+   ```bash
+   docker-compose up -d
+   ```
+4. Apply migrations:
+   ```bash
+   npx prisma migrate dev
+   ```
+5. Run the app:
+   ```bash
+   npm run dev
    ```
 
-## Database Setup
-Local Postgres via Docker Compose:
-1. Start Postgres:
-   ```bash
-   docker compose -f deploy/docker-compose.yml up -d postgres
-   ```
-2. Set `DATABASE_URL` (see `apps/web/.env.example`):
-   ```
-   postgresql://postgres:postgres@localhost:5432/xpenzi?schema=public
-   ```
-3. Run migrations and seed from `apps/web`:
-   ```bash
-   pnpm --filter @xpenzi/web db:migrate
-   pnpm --filter @xpenzi/web db:seed
-   ```
-4. Inspect data:
-   ```bash
-   pnpm --filter @xpenzi/web db:studio
-   ```
-
-If you prefer Supabase/Neon/etc., override `DATABASE_URL` with their connection string; Prisma will use it for migrate/seed.
-
-## Docker Compose
-To run Postgres and the web app together:
-```bash
-docker compose -f deploy/docker-compose.yml up --build
+## Environment Variables
 ```
-The app listens on port 3000 and connects to Postgres with the default credentials defined in the compose file.
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/xpenzi?schema=public
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/app
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/app
+```
+
+## Money & Rounding Rules
+- All money values are stored as integer minor units (e.g., cents/paise).
+- For EQUAL, PERCENTAGES, and SHARES:
+  - Base amounts are computed using floor division.
+  - Any remainder is distributed deterministically by ascending `userId`, adding +1 minor unit until balanced.
+- EXACT_AMOUNTS requires the sum of participant amounts to equal the total exactly.
+
+## API Endpoints
+- `POST /api/groups`
+- `GET /api/groups`
+- `GET /api/groups/:id`
+- `POST /api/groups/:id/members`
+- `POST /api/groups/:id/expenses`
+- `GET /api/groups/:id/expenses`
+- `GET /api/expenses/:id`
+- `PATCH /api/expenses/:id`
+- `DELETE /api/expenses/:id`
+- `POST /api/groups/:id/settlements`
+- `GET /api/groups/:id/settlements`
+- `GET /api/groups/:id/balances`
+- `GET /api/groups/:id/suggestions`
+
+## Settlement Suggestions
+Suggested settlements use a greedy algorithm:
+1. Split balances into creditors (net > 0) and debtors (net < 0).
+2. Match the largest debtor with the largest creditor.
+3. Transfer the minimum amount needed to settle one side.
+4. Repeat until all balances are settled.
 
 ## Scripts
-- `pnpm dev --filter @xpenzi/web` – Next.js dev server
-- `pnpm lint` – Lints the web app
-- `pnpm typecheck` – TypeScript checks
-- `pnpm build` – Builds the web app
-- `pnpm start` – Starts the production server after building
+- `npm run dev` - start local dev server
+- `npm run build` - production build
+- `npm run lint` - ESLint
+- `npm run typecheck` - TypeScript check
+- `npm run format` - Prettier
 
-## Project Structure
-- `apps/web` – Next.js application (App Router)
-- `deploy` – Docker Compose and nginx configs
-- `.github/workflows` – CI workflow for lint/typecheck/build
-
-## CI
-GitHub Actions workflow (`.github/workflows/web.yml`) installs dependencies via pnpm and runs lint, typecheck, and build on pushes and pull requests.
+## Deployment Notes
+- Configure Clerk keys and Postgres connection in production.
+- Run `npx prisma migrate deploy` during release.
+- Set `NEXT_PUBLIC_CLERK_*` URLs to match your deployed routes.

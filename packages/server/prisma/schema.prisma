@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum SplitMethod {
+  EQUAL
+  EXACT_AMOUNTS
+  PERCENTAGES
+  SHARES
+}
+
+model User {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  email       String   @unique
+  name        String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  groupsCreated         Group[]              @relation("GroupCreator")
+  groupMembers          GroupMember[]
+  expensesCreated       Expense[]            @relation("ExpenseCreator")
+  expensesPaid          Expense[]            @relation("ExpensePayer")
+  expenseParticipations ExpenseParticipant[]
+  settlementsFrom       Settlement[]         @relation("SettlementFrom")
+  settlementsTo         Settlement[]         @relation("SettlementTo")
+  settlementsOwned      Settlement[]         @relation("SettlementCreator")
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  currency    String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy  User          @relation("GroupCreator", fields: [createdById], references: [id])
+  members    GroupMember[]
+  expenses   Expense[]
+  settlements Settlement[]
+
+  @@index([createdById])
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  role     GroupRole
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  groupId     String
+  description String
+  totalAmount Int
+  currency    String
+  expenseDate DateTime
+  paidById    String
+  splitMethod SplitMethod
+  createdById String
+  isDeleted   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  group      Group               @relation(fields: [groupId], references: [id])
+  paidBy     User                @relation("ExpensePayer", fields: [paidById], references: [id])
+  createdBy  User                @relation("ExpenseCreator", fields: [createdById], references: [id])
+  participants ExpenseParticipant[]
+
+  @@index([groupId])
+  @@index([paidById])
+  @@index([createdById])
+}
+
+model ExpenseParticipant {
+  id         String  @id @default(cuid())
+  expenseId  String
+  userId     String
+  owedAmount Int
+  percent    Int?
+  shares     Int?
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+  @@index([expenseId])
+  @@index([userId])
+}
+
+model Settlement {
+  id             String   @id @default(cuid())
+  groupId        String
+  fromUserId     String
+  toUserId       String
+  amount         Int
+  currency       String
+  settlementDate DateTime
+  note           String?
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  group     Group @relation(fields: [groupId], references: [id])
+  fromUser  User  @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  toUser    User  @relation("SettlementTo", fields: [toUserId], references: [id])
+  createdBy User  @relation("SettlementCreator", fields: [createdById], references: [id])
+
+  @@index([groupId])
+  @@index([fromUserId])
+  @@index([toUserId])
+}
