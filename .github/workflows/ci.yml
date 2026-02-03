@@ -6,26 +6,37 @@ on:
   pull_request:
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
+          cache: "pnpm"
 
-      - name: Install
-        run: npm ci
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @xpenzi/server db:generate
+
+      - name: Check formatting
+        run: pnpm format --check
 
       - name: Lint
-        run: npm run lint
+        run: pnpm --filter @xpenzi/client lint
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm typecheck
 
       - name: Build
-        run: npm run build
+        run: pnpm build
